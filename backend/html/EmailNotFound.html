@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printer Corner</title>
+</head>
+<body>
+    
+    <h2> El email enviado no ha llegado. Reiniciando página</h2>
+    <h2>The email has not found. Reloading the page</h2>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+     
+    function redirect(){
+        
+        return window.location.href = "http://localhost:3000/latestEmail";
+        
+
+    }
+
+
+    window.setTimeout(redirect, 5000); 	// Call a function every 10000 milliseconds (OR 10 seconds).
+
+</script>
+  
+</body>
+</html>
