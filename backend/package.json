@@ -17,6 +17,7 @@
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
     "express-route-reload": "^1.0.1",
+    "html-pdf": "^3.0.1",
     "mailslurp-client": "^15.7.2",
     "nodemailer": "^6.7.3",
     "nodemon": "^2.0.15",

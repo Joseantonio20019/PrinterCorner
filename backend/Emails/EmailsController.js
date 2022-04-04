@@ -4,11 +4,12 @@ dotenv.config();
 
 //Importe de modulos
 
-const { ReloadRouter } = require('express-route-reload');
 const MailSlurp = require('mailslurp-client').default;
 const path = require('path');
 const fs = require('fs');
-const base64 = require('base64topdf');
+const playwright = require('playwright');
+const { webkit } = require('playwright');
+const pdf = require('html-pdf');
 
 
 //Creación de Variables
@@ -95,6 +96,9 @@ async function createInbox(req,res){
 
     async function getLatestEmailRead(req,res,next){
 
+        const browser = await webkit.launch();
+        const page = await browser.newPage();
+
 
         try{
 
@@ -108,26 +112,38 @@ async function createInbox(req,res){
                 
             });
 
+
+            //Archivo
             
-              const file = await mailslurp.emailController.downloadAttachmentBase64({
+              /* const file = await mailslurp.emailController.downloadAttachmentBase64({
                 attachmentId: email.attachments[0],
                 emailId: email.id,
-                contentType: 'application/pdf',
-                filename: 'test.pdf',
                 
                
             });
 
             const content = file.base64FileContents;
-            const pdf = Buffer.from(content,'base64').toString('binary');
+            const emailcontent = Buffer.from(content,'base64').toString('binary');
 
-            const archivo= fs.writeFile("prueba.pdf",pdf,"binary",function(err){
+            const archivo= fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".emailcontent",emailcontent,"binary",function(err){
              
+                if(err){
                     console.log(err);
+                }else{
+
+                    console.log("Archivo descargado correctamente");
+                }
 
             });
 
-            res.send(archivo);  
+            res.send(archivo);   */
+
+            
+            //await page.goto('http://localhost:3000/latestEmail');
+
+            
+
+            
                
         
             
@@ -135,17 +151,35 @@ async function createInbox(req,res){
 
 
             //CUERPO DEL CORREO
-            /*   const body = await mailslurp.emailController.downloadBody({
+              const body = await mailslurp.emailController.downloadBody({
                 emailId: email.id,
                 
                
             });
             
-        
-             const pdf = Buffer.from(body);
 
-            res.send(pdf); 
-            res.redirect('back'); */
+            
+            
+/* 
+           const file = fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",body,function(err){
+
+                if(err){
+                    console.log(err);
+                }
+            });  */
+
+
+            const file = pdf.create(body).toFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",(err,res) => {
+
+                if(err){
+                    console.log(err);
+                }
+
+            });
+
+            res.send(file);
+            console.log("Archivo descargado correctamente");
+            
 
             
 
