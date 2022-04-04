@@ -85,8 +85,7 @@ async function createInbox(req,res){
         }catch(err){
 
             console.log("Correo Vacío");
-            console.log(err);
-            //res.redirect("/notFound");
+            res.redirect("/notFound");
             
 
         }
@@ -94,7 +93,7 @@ async function createInbox(req,res){
     }
 
 
-    async function getLatestEmailRead(req,res){
+    async function getLatestEmailRead(req,res,next){
 
 
         try{
@@ -110,29 +109,45 @@ async function createInbox(req,res){
             });
 
             
-
-              /* const file = await mailslurp.emailController.downloadAttachmentBase64({
-                
+              const file = await mailslurp.emailController.downloadAttachmentBase64({
                 attachmentId: email.attachments[0],
-                emailId: email.id
+                emailId: email.id,
+                contentType: 'application/pdf',
+                filename: 'test.pdf',
+                
+               
+            });
 
-            });  
+            const content = file.base64FileContents;
+            const pdf = Buffer.from(content,'base64').toString('binary');
 
-            const conversor = Buffer.from(file.base64FileContents).toString();
+            const archivo= fs.writeFile("prueba.pdf",pdf,"binary",function(err){
+             
+                    console.log(err);
 
-            res.send(conversor) */
+            });
+
+            res.send(archivo);  
+               
+        
+            
             
 
-             const body = await mailslurp.emailController.downloadBody({
+
+            //CUERPO DEL CORREO
+            /*   const body = await mailslurp.emailController.downloadBody({
                 emailId: email.id,
                 
                
-            }); 
- 
-            const conversor = Buffer.from(body,'utf8').toString();
+            });
+            
+        
+             const pdf = Buffer.from(body);
 
-            const file = Buffer.from(conversor,'utf-8');
-            res.send(file);
+            res.send(pdf); 
+            res.redirect('back'); */
+
+            
 
         }catch(err){
 

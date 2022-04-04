@@ -39,7 +39,7 @@ io.on('redirect', (socket) => {
 //Middlewares de la app relacionados con node
 
 app.use(express.urlencoded({extended:true}));
-app.use(express.json());
+//app.use(express.json());
 
 //Configuración de dotenv para recibir las variables del archivo .env
 dotenv.config();
