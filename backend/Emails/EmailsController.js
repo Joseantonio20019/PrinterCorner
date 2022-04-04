@@ -94,7 +94,13 @@ async function createInbox(req,res){
     }
 
 
+    /*FUNCIÓN EN PRUEBAS*/
+
+    //Función para obtener el último correo de la bandeja de entrada, comprobación de archivos o cuerpo de correo y descarga del mismo
+
     async function getLatestEmailRead(req,res,next){
+
+    //Creación variables de la redireccióon de playwright a la página de checkeo de emails
 
         const browser = await webkit.launch();
         const page = await browser.newPage();
@@ -102,90 +108,116 @@ async function createInbox(req,res){
 
         try{
 
+            //Llamada al último email recibido
+
             const email =  await mailslurp.waitController.waitForLatestEmail({
     
-                inboxId: process.env.INBOX_ID,
-                timeout:10000,
-                unreadOnly: false,
+
+            //Parámetros de la API para poder recoger el último correo
+
+                    inboxId: process.env.INBOX_ID,
+                    timeout:10000,
+                    unreadOnly: false,
     
     
                 
             });
 
+        //Comprobaciones para saber si descargamos archivos o el cuerpo del correo
 
-            //Archivo
+            if(email.attachments != undefined){
+
+            //Descarga del archivo 
             
-              /* const file = await mailslurp.emailController.downloadAttachmentBase64({
-                attachmentId: email.attachments[0],
-                emailId: email.id,
+            //Descarga del archivo en base64 que es la forma de descargarlo de la API
+
+               const file = await mailslurp.emailController.downloadAttachmentBase64({
+
+                //Parámetros para saber que email y que archivo hay que descargar
+
+                    attachmentId: email.attachments[0],
+                    emailId: email.id,
                 
                
             });
 
-            const content = file.base64FileContents;
-            const emailcontent = Buffer.from(content,'base64').toString('binary');
+            //Variable para crear el contenido del archivo
+                const content = file.base64FileContents;
 
-            const archivo= fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".emailcontent",emailcontent,"binary",function(err){
+            //Conversión de Base64 a binario
+                const emailcontent = Buffer.from(content,'base64').toString('binary');
+
+            //Creación del archivo
+
+            //Indicamos ruta y nombre del archivo con su extensión, contenido del archivo y extensión de la que viene el archivo
+
+            const archivo= fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",emailcontent,"binary",function(err){
              
+            //Si salta un error la consola mostrará el problema
                 if(err){
                     console.log(err);
                 }else{
 
-                    console.log("Archivo descargado correctamente");
+                    
                 }
 
             });
 
-            res.send(archivo);   */
+            //Respuesta que se envía al cliente y autodescarga del archivo a la carpeta dirigida
+                res.send(archivo);   
+
+            //Comprobación de que el archivo se ha descargado
+                console.log("Archivo descargado correctamente");
+            
+            //Redirección a la página de checkeo de emails tras descargar el archivo
+                await page.goto('http://localhost:3000/latestEmail');
+
+        }else{
 
             
-            //await page.goto('http://localhost:3000/latestEmail');
 
             
-
-            
-               
-        
-            
-            
-
-
             //CUERPO DEL CORREO
+            //Llamamos a la función que descarga el cuerpo del correo
+
               const body = await mailslurp.emailController.downloadBody({
+
+            //Parámetro de la API para saber que correo es el que se va a descargar
+
                 emailId: email.id,
                 
                
             });
             
 
+            //Conversión y creación del archivo con el cuerpo del correo a PDF y descarga del mismo
+
+            //Llamamos a la libería html-pdf para convertir el cuerpo a archivo PDF 
+
+                const file = pdf.create(body).toFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",(err,res) => {
+
+                //Si existe un error la consola mostrará que error hay
+
+                    if(err){
+                        console.log(err);
+                    }
+
+                });
+
+                //Enviamos el archivo
+                    res.send(file);
+
+                //Comprobamos que el archivo se descarga correctamente
+
+                    console.log("Archivo descargado correctamente");
             
-            
-/* 
-           const file = fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",body,function(err){
-
-                if(err){
-                    console.log(err);
-                }
-            });  */
-
-
-            const file = pdf.create(body).toFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",(err,res) => {
-
-                if(err){
-                    console.log(err);
-                }
-
-            });
-
-            res.send(file);
-            console.log("Archivo descargado correctamente");
-            
-
+         }
             
 
         }catch(err){
 
 
+        //Se muestra el error en caso de que la función falle
             console.log(err);
 
 
@@ -198,42 +230,13 @@ async function createInbox(req,res){
 
 
     //Función que manda una vista que se encargará de reiniciar la página hasta que haya un correo entrante
+
     function mailNotFound(req,res){
 
         res.sendFile(path.join(__dirname + '/../html/EmailNotFound.html'));
 
 
     }
-
-    function prueba(req,res){
-
-        res.sendFile(path.join(__dirname + '/../html/prueba.html'));
-
-    }
-
-
-   /*  
-    if(email.attachments != ''){
-
-
-        res.send(email.attachments);
-
-    }else{
-
-        res.send(email.body);
-        res.status(200);
-        console.log("Correo devuelto correctamente");
-        
-    }
-    
-    }catch(error){
-        console.log("Correo vacío");
-        //Función para la recarga de la página constantemente y no      
-        res.sendFile(__dirname,'/html/EmailNotFound.html');
-    } */
-
-    
-
 
 
 
@@ -244,7 +247,6 @@ module.exports={
     getLatestEmail,
     getLatestEmailRead,
     mailNotFound,
-    prueba
 
 }
 
