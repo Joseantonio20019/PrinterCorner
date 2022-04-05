@@ -8,22 +8,23 @@
 </head>
 <body>
     
-    <h2>Welcome to Printer Corner</h2>
-    <h2>Bienvenido a Printer Corner</h2>
+    <h2> La bandeja de entrada no ha recibido correos nuevos. Reiniciando página</h2>
+    <h2> The inbox doesnt found new emails. Reloading the page</h2>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      var socket = io();
-
-      //Creamos una función para redireccionar al checkeo del último correo
-      function redirect(){
+     
+     //Creamos una función para redireccionar al checkeo del último correo
+    function redirect(){
         
         return window.location.href = "http://localhost:3000/checkNewEmail";
         
 
     }
 
-    window.setTimeout(redirect, 5000);
+// Llamamos a la función a los 5 segundos para que haga la redirección a la ruta especificada en la función
+
+    window.setTimeout(redirect, 5000); 	
 
 </script>
   

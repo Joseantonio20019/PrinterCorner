@@ -4,9 +4,10 @@ const router = express.Router();
 
 
 router.post('/inbox',EmailController.createInbox)
+      .get('/',EmailController.index)
       .get('/emails',EmailController.getEmails)
-      .get('/latestEmail',EmailController.getLatestEmail)
-      .get('/notFound', EmailController.mailNotFound)
+      .get('/checkNewEmail',EmailController.getEmailAndDownloadInfo)
+      .get('/inboxEmpty', EmailController.inboxEmpty)
       .get('/readEmail',EmailController.getLatestEmailRead)
 
 

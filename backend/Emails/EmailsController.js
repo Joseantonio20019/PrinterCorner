@@ -1,4 +1,6 @@
+
 //Importar y generar la función que permita recoger los datos del archivo .env
+
 const dotenv= require('dotenv');
 dotenv.config();
 
@@ -7,48 +9,82 @@ dotenv.config();
 const MailSlurp = require('mailslurp-client').default;
 const path = require('path');
 const fs = require('fs');
-const playwright = require('playwright');
 const { webkit } = require('playwright');
 const pdf = require('html-pdf');
 
-
 //Creación de Variables
+
 const apiKey = process.env.API_KEY;
 const mailslurp = new MailSlurp({ apiKey});
 
 
-//Función para la creación de bandejas de entrada
-async function createInbox(req,res){
 
-    const inbox= await mailslurp.inboxController.createInbox({
-
-        name: 'R2 Hotels Printer Corner',
-        useDomainPool: true,
-        expiresAt: null,
-
-    });
-    
-    res.send(inbox);
-    console.log('Bandeja creada correctamente');
-    
-}
-
-//Función para mostrar todos los emails
-
-    async function getEmails(req,res){
+    //FUNCIONES
 
 
-        const emails = await mailslurp.inboxController.getEmails({ inboxId: process.env.INBOX_ID });
+    //Función para mostrar la página principal de la aplicación
 
-        res.send(emails);
-  
+    function index(req,res){
 
+
+        //Envío de un archivo html que muestra la vista general de la página index
+
+        res.sendFile(path.join(__dirname + '/../html/index.html'));
     }
+
+    //Función para la creación de bandejas de entrada
+
+        async function createInbox(req,res){
+
+        //Creamos la variable inbox, que llama a la función createInbox y pide como parámetros el nombre, si utiliza un dominio específico y fecha de expiración
+
+            const inbox= await mailslurp.inboxController.createInbox({
+
+            //Parámetros de la bandeja de entrada 
+
+                name: 'R2 Hotels Printer Corner',
+                useDomainPool: true,
+                expiresAt: null,
+
+            });
+            
+        //Envío de la bandeja de entrada
+
+            res.send(inbox);
+
+        //Mensaje por consola para mostrar que la bandeja de entrada se ha creado
+            
+            console.log('Bandeja creada correctamente');
+            
+        }
+
+    //Función para mostrar todos los emails de la bandeja de entrada
+
+        async function getEmails(req,res){
+
+
+        //Creamos la variable emails, que llama a la función getEmails y devuelve todos los emails de la bandeja de entrada
+
+            const emails = await mailslurp.inboxController.getEmails({ 
+                
+            //Parámetros para obtener los correos, en este caso el id de la bandeja de entrada
+
+                inboxId: process.env.INBOX_ID 
+            
+            });
+
+
+        //Envío de los emails 
+
+            res.send(emails);
+    
+
+        }
 
 
 //Función para mostrar el último email recibido, en caso de que no se reciba ninguno se creará un bucle infinito hasta que llegue un correo
 
-  async function getLatestEmail(req,res){
+  async function getEmailAndDownloadInfo(req,res){
 
         try{
 
@@ -62,8 +98,6 @@ async function createInbox(req,res){
             
         });
 
-            //res.send(email);
-    
 
             //Funciona pero no descarga el file entero
 
@@ -86,7 +120,7 @@ async function createInbox(req,res){
         }catch(err){
 
             console.log("Correo Vacío");
-            res.redirect("/notFound");
+            res.redirect("/inboxEmpty");
             
 
         }
@@ -133,7 +167,7 @@ async function createInbox(req,res){
 
                const file = await mailslurp.emailController.downloadAttachmentBase64({
 
-                //Parámetros para saber que email y que archivo hay que descargar
+                //Parámetros para saber que email y que archivo hay que descargar, en este caso el id del archivo y el id del email
 
                     attachmentId: email.attachments[0],
                     emailId: email.id,
@@ -142,18 +176,21 @@ async function createInbox(req,res){
             });
 
             //Variable para crear el contenido del archivo
+
                 const content = file.base64FileContents;
 
             //Conversión de Base64 a binario
+
                 const emailcontent = Buffer.from(content,'base64').toString('binary');
 
             //Creación del archivo
 
-            //Indicamos ruta y nombre del archivo con su extensión, contenido del archivo y extensión de la que viene el archivo
+            //Creamos la variable archivo e indicamos ruta y nombre del archivo con su extensión, contenido del archivo y extensión de la que viene el archivo
 
-            const archivo= fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",emailcontent,"binary",function(err){
+            const archivo= fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random() * 10000)+".pdf",emailcontent,"binary",function(err){
              
             //Si salta un error la consola mostrará el problema
+
                 if(err){
                     console.log(err);
                 }else{
@@ -164,13 +201,16 @@ async function createInbox(req,res){
             });
 
             //Respuesta que se envía al cliente y autodescarga del archivo a la carpeta dirigida
+
                 res.send(archivo);   
 
             //Comprobación de que el archivo se ha descargado
+
                 console.log("Archivo descargado correctamente");
             
             //Redirección a la página de checkeo de emails tras descargar el archivo
-                await page.goto('http://localhost:3000/latestEmail');
+
+                await page.goto('http://localhost:3000/checkNewEmail');
 
         }else{
 
@@ -182,7 +222,7 @@ async function createInbox(req,res){
 
               const body = await mailslurp.emailController.downloadBody({
 
-            //Parámetro de la API para saber que correo es el que se va a descargar
+            //Parámetro de la API para saber que correo es el que se va a descargar, en este caso solo la id del email
 
                 emailId: email.id,
                 
@@ -231,9 +271,9 @@ async function createInbox(req,res){
 
     //Función que manda una vista que se encargará de reiniciar la página hasta que haya un correo entrante
 
-    function mailNotFound(req,res){
+    function inboxEmpty(req,res){
 
-        res.sendFile(path.join(__dirname + '/../html/EmailNotFound.html'));
+        res.sendFile(path.join(__dirname + '/../html/InboxEmpty.html'));
 
 
     }
@@ -242,11 +282,12 @@ async function createInbox(req,res){
 
 module.exports={
 
+    index,
     createInbox,
     getEmails,
-    getLatestEmail,
+    getEmailAndDownloadInfo,
     getLatestEmailRead,
-    mailNotFound,
+    inboxEmpty,
 
 }
 
