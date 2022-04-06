@@ -119,6 +119,7 @@ const mailslurp = new MailSlurp({ apiKey});
 
         }catch(err){
 
+            
             console.log("Correo Vacío");
             res.redirect("/inboxEmpty");
             
@@ -132,9 +133,9 @@ const mailslurp = new MailSlurp({ apiKey});
 
     //Función para obtener el último correo de la bandeja de entrada, comprobación de archivos o cuerpo de correo y descarga del mismo
 
-    async function getLatestEmailRead(req,res,next){
+    async function getLatestEmailRead(req,res){
 
-    //Creación variables de la redireccióon de playwright a la página de checkeo de emails
+    //Creación variables de la redirección de playwright para redirigir a la página de checkeo de emails
 
         const browser = await webkit.launch();
         const page = await browser.newPage();
@@ -187,7 +188,7 @@ const mailslurp = new MailSlurp({ apiKey});
 
             //Creamos la variable archivo e indicamos ruta y nombre del archivo con su extensión, contenido del archivo y extensión de la que viene el archivo
 
-            const archivo= fs.writeFile("../../PrinterCornerFiles/"+Math.floor(Math.random() * 10000)+".pdf",emailcontent,"binary",function(err){
+            const archivo = fs.writeFile("../../PrinterCornerFiles/" + Math.floor(Math.random() * 10000) + ".pdf",emailcontent,"binary",function(err){
              
             //Si salta un error la consola mostrará el problema
 
@@ -234,7 +235,7 @@ const mailslurp = new MailSlurp({ apiKey});
 
             //Llamamos a la libería html-pdf para convertir el cuerpo a archivo PDF 
 
-                const file = pdf.create(body).toFile("../../PrinterCornerFiles/"+Math.floor(Math.random()* 10000)+".pdf",(err,res) => {
+                const file = pdf.create(body).toFile("../../PrinterCornerFiles/" + Math.floor(Math.random()* 10000) + ".pdf",(err,res) => {
 
                 //Si existe un error la consola mostrará que error hay
 
@@ -245,6 +246,7 @@ const mailslurp = new MailSlurp({ apiKey});
                 });
 
                 //Enviamos el archivo
+
                     res.send(file);
 
                 //Comprobamos que el archivo se descarga correctamente
@@ -256,8 +258,8 @@ const mailslurp = new MailSlurp({ apiKey});
 
         }catch(err){
 
-
         //Se muestra el error en caso de que la función falle
+
             console.log(err);
 
 
@@ -273,22 +275,58 @@ const mailslurp = new MailSlurp({ apiKey});
 
     function inboxEmpty(req,res){
 
+        //Enviamos la vista de que no se han recibido correos
+
         res.sendFile(path.join(__dirname + '/../html/InboxEmpty.html'));
+
+
+    }
+
+    //Función implementada para borrar los correos de la bandeja de entrada
+
+    async function deleteEmail(req,res){
+
+        try{
+
+            //Llamada a la API para borrar el correo
+
+            const deleteEmail = await mailslurp.deleteEmail(req.params.id);
+            
+            //Enviamos la función eliminando el correo
+
+            res.send(deleteEmail);
+
+            //Comprobación de que el correo se ha borrado correctamente
+
+            console.log("Correo borrado correctamente");
+
+        }catch(err){
+
+            //Se muestra el error en caso de que la función falle
+
+            console.log(err);
+
+        }
+
+
 
 
     }
 
 
 
-module.exports={
+//Exportamos cada una de las funciones del controlador para ser utilizado en el resto de la aplicación 
 
-    index,
-    createInbox,
-    getEmails,
-    getEmailAndDownloadInfo,
-    getLatestEmailRead,
-    inboxEmpty,
+    module.exports = {
 
-}
+        index,
+        createInbox,
+        getEmails,
+        getEmailAndDownloadInfo,
+        getLatestEmailRead,
+        inboxEmpty,
+        deleteEmail,
+
+    }
 
 
