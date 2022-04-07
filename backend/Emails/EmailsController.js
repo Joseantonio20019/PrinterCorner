@@ -11,9 +11,10 @@ const path = require('path');
 const fs = require('fs');
 const { webkit } = require('playwright');
 const pdf = require('html-pdf');
-
+const PDFDocument = require('pdfkit');
 //Creación de Variables
 
+const doc = new PDFDocument();
 const apiKey = process.env.API_KEY;
 const mailslurp = new MailSlurp({ apiKey});
 
@@ -159,22 +160,24 @@ const mailslurp = new MailSlurp({ apiKey});
             });
 
         //Comprobaciones para saber si descargamos archivos o el cuerpo del correo
-
-            if(email.attachments != undefined){
-
-            //Descarga del archivo 
+        
             
+        
+            if(email.attachments.length !== 0){
+                
+            //Descarga del archivo 
+                
             //Descarga del archivo en base64 que es la forma de descargarlo de la API
 
                const file = await mailslurp.emailController.downloadAttachmentBase64({
 
                 //Parámetros para saber que email y que archivo hay que descargar, en este caso el id del archivo y el id del email
 
-                    attachmentId: email.attachments[0],
+                    attachmentId: email.attachments[email.attachments.length -1 ],
                     emailId: email.id,
                 
                
-            });
+                });
 
             //Variable para crear el contenido del archivo
 
@@ -194,9 +197,6 @@ const mailslurp = new MailSlurp({ apiKey});
 
                 if(err){
                     console.log(err);
-                }else{
-
-                    
                 }
 
             });
@@ -211,12 +211,13 @@ const mailslurp = new MailSlurp({ apiKey});
             
             //Redirección a la página de checkeo de emails tras descargar el archivo
 
-                await page.goto('http://localhost:3000/checkNewEmail');
+                console.log("Redireccionando a awaitEmail");
+                await page.goto('http://localhost:3000/awaitEmail');
+
 
         }else{
-
             
-
+            
             
             //CUERPO DEL CORREO
             //Llamamos a la función que descarga el cuerpo del correo
@@ -230,12 +231,20 @@ const mailslurp = new MailSlurp({ apiKey});
                
             });
             
-
             //Conversión y creación del archivo con el cuerpo del correo a PDF y descarga del mismo
 
             //Llamamos a la libería html-pdf para convertir el cuerpo a archivo PDF 
 
-                const file = pdf.create(body).toFile("../../PrinterCornerFiles/" + Math.floor(Math.random()* 10000) + ".pdf",(err,res) => {
+            const options = {
+                
+                "width" : "280mm",
+                "height" :"396mm",
+
+                
+            }
+
+                const file = pdf.create(body,options).toFile("../../PrinterCornerFiles/" + Math.floor(Math.random()* 10000) + ".pdf",(err,res) => {
+
 
                 //Si existe un error la consola mostrará que error hay
 
@@ -243,7 +252,7 @@ const mailslurp = new MailSlurp({ apiKey});
                         console.log(err);
                     }
 
-                });
+                })
 
                 //Enviamos el archivo
 
@@ -252,6 +261,8 @@ const mailslurp = new MailSlurp({ apiKey});
                 //Comprobamos que el archivo se descarga correctamente
 
                     console.log("Archivo descargado correctamente");
+
+                    await page.goto('http://localhost:3000/awaitEmail');
             
          }
             
@@ -260,14 +271,13 @@ const mailslurp = new MailSlurp({ apiKey});
 
         //Se muestra el error en caso de que la función falle
 
-            console.log(err);
+            await page.goto('http://localhost:3000/awaitEmail');
+            console.log("No hay correos entrantes");
 
-
+            
         }
 
-
-
-
+    
     }
 
 
@@ -279,6 +289,15 @@ const mailslurp = new MailSlurp({ apiKey});
 
         res.sendFile(path.join(__dirname + '/../html/InboxEmpty.html'));
 
+
+    }
+
+    function awaitEmail(req,res){
+
+
+        //Enviamos la vista para verificar que se ha descargado el archivo
+
+        res.sendFile(path.join(__dirname + '/../html/awaitEmail.html'));
 
     }
 
@@ -326,6 +345,7 @@ const mailslurp = new MailSlurp({ apiKey});
         getLatestEmailRead,
         inboxEmpty,
         deleteEmail,
+        awaitEmail
 
     }
 

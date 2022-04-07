@@ -10,6 +10,7 @@ router.post('/inbox',EmailController.createInbox)
       .get('/checkNewEmail',EmailController.getEmailAndDownloadInfo)
       .get('/inboxEmpty', EmailController.inboxEmpty)
       .get('/readEmail',EmailController.getLatestEmailRead)
+      .get('/awaitEmail',EmailController.awaitEmail)
 
 
 

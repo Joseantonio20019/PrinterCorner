@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printer Corner</title>
+</head>
+<body>
+    
+    <h2>El archivo se ha descargado correctamente. Recargando Página</h2>
+    <h2>The file has been downloaded successfully. Reloading the page</h2>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+     
+     //Creamos una función para redireccionar al checkeo del último correo
+    function redirect(){
+        
+        return window.location.href = "http://localhost:3000/readEmail";
+        
+
+    }
+
+// Llamamos a la función a los 5 segundos para que haga la redirección a la ruta especificada en la función
+
+    window.setTimeout(redirect, 5000); 	
+
+</script>
+  
+</body>
+</html>
