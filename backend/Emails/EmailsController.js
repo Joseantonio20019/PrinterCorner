@@ -22,17 +22,6 @@ const mailslurp = new MailSlurp({ apiKey});
 
     //FUNCIONES
 
-
-    //Función para mostrar la página principal de la aplicación
-
-    function index(req,res){
-
-
-        //Envío de un archivo html que muestra la vista general de la página index
-
-        res.sendFile(path.join(__dirname + '/../html/index.html'));
-    }
-
     //Función para la creación de bandejas de entrada
 
         async function createInbox(req,res){
@@ -59,82 +48,12 @@ const mailslurp = new MailSlurp({ apiKey});
             
         }
 
-    //Función para mostrar todos los emails de la bandeja de entrada
-
-        async function getEmails(req,res){
-
-
-        //Creamos la variable emails, que llama a la función getEmails y devuelve todos los emails de la bandeja de entrada
-
-            const emails = await mailslurp.inboxController.getEmails({ 
-                
-            //Parámetros para obtener los correos, en este caso el id de la bandeja de entrada
-
-                inboxId: process.env.INBOX_ID 
-            
-            });
-
-
-        //Envío de los emails 
-
-            res.send(emails);
-    
-
-        }
-
-
-//Función para mostrar el último email recibido, en caso de que no se reciba ninguno se creará un bucle infinito hasta que llegue un correo
-
-  async function getEmailAndDownloadInfo(req,res){
-
-        try{
-
-        const email =  await mailslurp.waitController.waitForLatestEmail({
-
-            inboxId: process.env.INBOX_ID,
-            timeout:10000,
-            unreadOnly: true,
-
-
-            
-        });
-
-
-            //Funciona pero no descarga el file entero
-
-              if(email.attachments != undefined){
-
-                
-                const attachment = await mailslurp.emailController.downloadAttachmentBase64({
-                    
-                    emailId: email.id,
-                    attachmentId: email.attachments[0],
-                    
-                });
-            
-                res.send(attachment);
-
-            } 
-
-             
-
-        }catch(err){
-
-            
-            console.log("Correo Vacío");
-            res.redirect("/inboxEmpty");
-            
-
-        }
-    
-    }
-
 
     /*FUNCIÓN EN PRUEBAS*/
 
-    //Función para obtener el último correo de la bandeja de entrada, comprobación de archivos o cuerpo de correo y descarga del mismo
+    //Función para mostrar el último email recibido, en caso de que no se reciba ninguno se creará un bucle infinito hasta que llegue un correo
 
-    async function getLatestEmailRead(req,res){
+    async function getLatestEmailAndDownloadContent(req,res){
 
     //Creación variables de la redirección de playwright para redirigir a la página de checkeo de emails
 
@@ -148,23 +67,48 @@ const mailslurp = new MailSlurp({ apiKey});
 
             const email =  await mailslurp.waitController.waitForLatestEmail({
     
-
             //Parámetros de la API para poder recoger el último correo
 
                     inboxId: process.env.INBOX_ID,
                     timeout:10000,
-                    unreadOnly: false,
+                    unreadOnly: true,
     
     
                 
             });
 
-        //Comprobaciones para saber si descargamos archivos o el cuerpo del correo
-        
+            //Comprobamos que el correo tiene archivos adjuntos
+
+            const attachments = await mailslurp.emailController.getEmailAttachments({
+
+                inboxId: process.env.INBOX_ID,
+                emailId: email.id,
+    
+            });
+
             
-        
-            if(email.attachments.length !== 0){
+            let pdfFile = null;
+
+            attachments.forEach((attachment)=>{
+
+                if(attachment.contentType == "application/pdf"){
+
+                    console.log(attachment.contentType);
+                     pdfFile = attachment;
+                     
+                }
+
+            })
+
+            
+
+        //Comprobaciones para saber si descargamos archivos o el cuerpo del correo
+
+        //Hacemos un checkeo de que el archivo es un PDF, sino se redirecionará a la página principal para hacer de nuevo el proceso
+            
+            if(attachments.length > 0 && pdfFile.contentType == 'application/pdf'){
                 
+            
             //Descarga del archivo 
                 
             //Descarga del archivo en base64 que es la forma de descargarlo de la API
@@ -173,12 +117,14 @@ const mailslurp = new MailSlurp({ apiKey});
 
                 //Parámetros para saber que email y que archivo hay que descargar, en este caso el id del archivo y el id del email
 
-                    attachmentId: email.attachments[email.attachments.length -1 ],
+                    attachmentId:pdfFile.id,
                     emailId: email.id,
                 
                
                 });
 
+        
+                
             //Variable para crear el contenido del archivo
 
                 const content = file.base64FileContents;
@@ -211,12 +157,15 @@ const mailslurp = new MailSlurp({ apiKey});
             
             //Redirección a la página de checkeo de emails tras descargar el archivo
 
-                console.log("Redireccionando a awaitEmail");
-                await page.goto('http://localhost:3000/awaitEmail');
+                console.log("Redireccionando");
+         
+                await page.goto('http://localhost:3000/');
 
+            
+        
+       
 
         }else{
-            
             
             
             //CUERPO DEL CORREO
@@ -231,9 +180,8 @@ const mailslurp = new MailSlurp({ apiKey});
                
             });
             
-            //Conversión y creación del archivo con el cuerpo del correo a PDF y descarga del mismo
-
-            //Llamamos a la libería html-pdf para convertir el cuerpo a archivo PDF 
+            
+            //Variable opciones de la librería de conversión a pdf con el formato que se le va a dar al cuerpo del correo
 
             const options = {
                 
@@ -242,6 +190,10 @@ const mailslurp = new MailSlurp({ apiKey});
 
                 
             }
+
+            //Conversión y creación del archivo con el cuerpo del correo a PDF y descarga del mismo
+
+            //Llamamos a la libería html-pdf para convertir el cuerpo a archivo PDF 
 
                 const file = pdf.create(body,options).toFile("../../PrinterCornerFiles/" + Math.floor(Math.random()* 10000) + ".pdf",(err,res) => {
 
@@ -256,50 +208,70 @@ const mailslurp = new MailSlurp({ apiKey});
 
                 //Enviamos el archivo
 
-                    res.send(file);
+                    //res.send(file);
+
+
+                //Generamos un correo de confirmación de que se ha descargado el archivo y que en breves se imprimirá
+
+                
 
                 //Comprobamos que el archivo se descarga correctamente
 
-                    console.log("Archivo descargado correctamente");
+                    console.log("Archivo descargado correctamente.Redireccionando");
+                    
+                    //Redireccionamos para que el programa sigo funcionando automáticamente
+                    await page.goto('http://localhost:3000/');
 
-                    await page.goto('http://localhost:3000/awaitEmail');
+            }
             
-         }
             
-
         }catch(err){
 
         //Se muestra el error en caso de que la función falle
 
-            await page.goto('http://localhost:3000/awaitEmail');
-            console.log("No hay correos entrantes");
-
+            console.log("No hay correos entrantes.Redireccionando");
+            await page.goto('http://localhost:3000/');
+            
             
         }
 
     
     }
 
+      //Función para mostrar la página principal de la aplicación
 
-    //Función que manda una vista que se encargará de reiniciar la página hasta que haya un correo entrante
-
-    function inboxEmpty(req,res){
-
-        //Enviamos la vista de que no se han recibido correos
-
-        res.sendFile(path.join(__dirname + '/../html/InboxEmpty.html'));
+      function index(req,res){
 
 
-    }
+        //Envío de un archivo html que muestra la vista general de la página index
 
-    function awaitEmail(req,res){
+        res.sendFile(path.join(__dirname + '/../html/index.html'));
+
+        }
 
 
-        //Enviamos la vista para verificar que se ha descargado el archivo
+    //Función para mostrar todos los emails de la bandeja de entrada
 
-        res.sendFile(path.join(__dirname + '/../html/awaitEmail.html'));
+    async function getEmails(req,res){
 
-    }
+
+        //Creamos la variable emails, que llama a la función getEmails y devuelve todos los emails de la bandeja de entrada
+
+            const emails = await mailslurp.inboxController.getEmails({ 
+                
+            //Parámetros para obtener los correos, en este caso el id de la bandeja de entrada
+
+                inboxId: process.env.INBOX_ID 
+            
+            });
+
+
+        //Envío de los emails 
+
+            res.send(emails);
+    
+
+        }
 
     //Función implementada para borrar los correos de la bandeja de entrada
 
@@ -326,10 +298,25 @@ const mailslurp = new MailSlurp({ apiKey});
             console.log(err);
 
         }
+    }
+
+    async function getEmailFiles(req,res){
 
 
+        try {
 
+        const files = await mailslurp.emailController.getEmailAttachments({
 
+            inboxId: process.env.INBOX_ID,
+            emailId: req.params.id
+        });
+
+        res.send(files);
+
+        }catch(err){
+
+            console.log(err);
+        }
     }
 
 
@@ -341,11 +328,9 @@ const mailslurp = new MailSlurp({ apiKey});
         index,
         createInbox,
         getEmails,
-        getEmailAndDownloadInfo,
-        getLatestEmailRead,
-        inboxEmpty,
+        getLatestEmailAndDownloadContent,
         deleteEmail,
-        awaitEmail
+        getEmailFiles
 
     }
 

@@ -8,8 +8,8 @@
 </head>
 <body>
     
-    <h2>Welcome to Printer Corner</h2>
-    <h2>Bienvenido a Printer Corner</h2>
+    <h2 class="text center">Welcome to Printer Corner</h2>
+    <h2 class="text-center">Bienvenido a Printer Corner</h2>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -18,14 +18,14 @@
       //Creamos una función para redireccionar al checkeo del último correo
       function redirect(){
         
-        return window.location.href = "http://localhost:3000/checkNewEmail";
+        return window.location.href = "http://localhost:3000/getEmail";
         
 
     }
 
     //Indicamos un intervalo de 5 segundos para que haga la redirección a la ruta especificada en la función
     
-    window.setTimeout(redirect, 5000);
+    window.setTimeout(redirect, 10000);
 
 </script>
   

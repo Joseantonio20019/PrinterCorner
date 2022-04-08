@@ -20,7 +20,10 @@
                 <td>{{ email.subject }}</td>
                 <td>{{ email.from }}</td>
                 <td>{{email.createdAt}}</td>
-                <button class="btn btn-danger text-dark" @click="deleteEmail(email.id)">Eliminar Correo</button>
+                <div class="d-flex justify-content-between">
+                <router-link class= " btn btn-success text-dark" :to="`/getEmailFiles/${email.id}`">Ver Archivos</router-link>
+                <button class="btn btn-danger text-dark" @click="deleteEmail(email.id)">Borrar</button>
+                </div>
               </tr>
             </tbody>
           </table>
@@ -58,7 +61,6 @@
         })
 
     }
-
 
     onMounted(async () => {
 

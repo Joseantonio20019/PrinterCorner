@@ -3,6 +3,7 @@
 //Importe de el componente Emails de Vue
 
     import Emails from '../components/Emails/Emails.vue';
+    import EmailFiles from '../components/Emails/EmailFiles.vue';
     import Home from "../components/Views/Home.vue";
 
 
@@ -16,7 +17,8 @@
 
             //Rutas Emails
 
-            {path: "/emails", component: Emails}
+            {path: "/emails", component: Emails},
+            {path: "/getEmailFiles/:id", component: EmailFiles}
 
 
         ],

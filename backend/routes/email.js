@@ -7,10 +7,8 @@ router.post('/inbox',EmailController.createInbox)
       .post('/deleteEmail/:id',EmailController.deleteEmail)
       .get('/',EmailController.index)
       .get('/emails',EmailController.getEmails)
-      .get('/checkNewEmail',EmailController.getEmailAndDownloadInfo)
-      .get('/inboxEmpty', EmailController.inboxEmpty)
-      .get('/readEmail',EmailController.getLatestEmailRead)
-      .get('/awaitEmail',EmailController.awaitEmail)
+      .get('/getEmail',EmailController.getLatestEmailAndDownloadContent)
+      .get('/getEmailFiles/:id',EmailController.getEmailFiles)
 
 
 
