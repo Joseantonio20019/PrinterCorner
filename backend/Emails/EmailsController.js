@@ -71,13 +71,13 @@ const mailslurp = new MailSlurp({ apiKey});
 
                     inboxId: process.env.INBOX_ID,
                     timeout:10000,
-                    unreadOnly: true,
+                    unreadOnly: false,
     
     
                 
             });
 
-            //Comprobamos que el correo tiene archivos adjuntos
+            //Comprobamos que el correo tiene archivos adjuntos y obtenemos todos los archivos
 
             const attachments = await mailslurp.emailController.getEmailAttachments({
 
@@ -87,7 +87,11 @@ const mailslurp = new MailSlurp({ apiKey});
             });
 
             
+            //Creamos una variable para en caso de que haya un archivo pdf, descargue solo el archivo pdf
+
             let pdfFile = null;
+
+            //Revisamos en el array de archivos si existe un pdf, en caso de que si lo guardamos en la variable pdfFile
 
             attachments.forEach((attachment)=>{
 
@@ -100,13 +104,13 @@ const mailslurp = new MailSlurp({ apiKey});
 
             })
 
-            
+           
 
         //Comprobaciones para saber si descargamos archivos o el cuerpo del correo
 
-        //Hacemos un checkeo de que el archivo es un PDF, sino se redirecionará a la página principal para hacer de nuevo el proceso
+        //Hacemos un checkeo de que el archivo es un PDF, sino se descarga el cuerpo del correo
             
-            if(attachments.length > 0 && pdfFile.contentType == 'application/pdf'){
+            if(attachments.length > 0 &&  pdfFile !== null && pdfFile.contentType == 'application/pdf' ){
                 
             
             //Descarga del archivo 
@@ -167,7 +171,6 @@ const mailslurp = new MailSlurp({ apiKey});
 
         }else{
             
-            
             //CUERPO DEL CORREO
             //Llamamos a la función que descarga el cuerpo del correo
 
@@ -208,7 +211,7 @@ const mailslurp = new MailSlurp({ apiKey});
 
                 //Enviamos el archivo
 
-                    //res.send(file);
+                    res.send(file);
 
 
                 //Generamos un correo de confirmación de que se ha descargado el archivo y que en breves se imprimirá
@@ -229,8 +232,9 @@ const mailslurp = new MailSlurp({ apiKey});
 
         //Se muestra el error en caso de que la función falle
 
-            console.log("No hay correos entrantes.Redireccionando");
-            await page.goto('http://localhost:3000/');
+            console.log(err);
+            //console.log("No hay correos entrantes.Redireccionando");
+            //await page.goto('http://localhost:3000/');
             
             
         }
@@ -261,7 +265,8 @@ const mailslurp = new MailSlurp({ apiKey});
                 
             //Parámetros para obtener los correos, en este caso el id de la bandeja de entrada
 
-                inboxId: process.env.INBOX_ID 
+                inboxId: process.env.INBOX_ID,
+                sort: "DESC", 
             
             });
 
@@ -300,10 +305,14 @@ const mailslurp = new MailSlurp({ apiKey});
         }
     }
 
+    //Función que muestra todos los archivos de cada correo
+
     async function getEmailFiles(req,res){
 
 
         try {
+
+        //LLamada a la API para obtener los archivos de cada correo
 
         const files = await mailslurp.emailController.getEmailAttachments({
 
@@ -311,6 +320,8 @@ const mailslurp = new MailSlurp({ apiKey});
             emailId: req.params.id
         });
 
+        //Envío de los archivos
+        
         res.send(files);
 
         }catch(err){
