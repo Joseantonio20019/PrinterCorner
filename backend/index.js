@@ -20,7 +20,7 @@
 
   io.on('connection',(socket) => {
 
-    console.log('conectado');
+    console.log('Conectado.Bienvenido a Printer Corner'); 
 
 
   })

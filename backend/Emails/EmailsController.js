@@ -49,7 +49,6 @@ const mailslurp = new MailSlurp({ apiKey});
         }
 
 
-    /*FUNCIÓN EN PRUEBAS*/
 
     //Función para mostrar el último email recibido, en caso de que no se reciba ninguno se creará un bucle infinito hasta que llegue un correo
 
@@ -71,7 +70,7 @@ const mailslurp = new MailSlurp({ apiKey});
 
                     inboxId: process.env.INBOX_ID,
                     timeout:10000,
-                    unreadOnly: false,
+                    unreadOnly: true,
     
     
                 
@@ -163,7 +162,7 @@ const mailslurp = new MailSlurp({ apiKey});
 
                 console.log("Redireccionando");
          
-                await page.goto('http://localhost:3000/');
+                await page.goto('http://localhost:3000/sendEmail');
 
             
         
@@ -214,27 +213,23 @@ const mailslurp = new MailSlurp({ apiKey});
                     res.send(file);
 
 
-                //Generamos un correo de confirmación de que se ha descargado el archivo y que en breves se imprimirá
-
-                
-
+            
                 //Comprobamos que el archivo se descarga correctamente
 
                     console.log("Archivo descargado correctamente.Redireccionando");
                     
-                    //Redireccionamos para que el programa sigo funcionando automáticamente
-                    await page.goto('http://localhost:3000/');
+                    //Redireccionamos a la ruta que mandará un correo de verificación al cliente
+                    await page.goto('http://localhost:3000/sendEmail');
 
             }
             
             
         }catch(err){
 
-        //Se muestra el error en caso de que la función falle
+            //Se muestra el error en caso de que la función falla
 
-            console.log(err);
-            //console.log("No hay correos entrantes.Redireccionando");
-            //await page.goto('http://localhost:3000/');
+            console.log("No hay correos entrantes.Redireccionando");
+            await page.goto('http://localhost:3000/');
             
             
         }
@@ -274,6 +269,7 @@ const mailslurp = new MailSlurp({ apiKey});
         //Envío de los emails 
 
             res.send(emails);
+            
     
 
         }
@@ -331,6 +327,59 @@ const mailslurp = new MailSlurp({ apiKey});
     }
 
 
+    //Función que manda un correo de confirmación al cliente
+
+    async function sendEmail(req,res){
+
+        const browser = await webkit.launch();
+        const page = await browser.newPage();
+
+       try{
+
+        //Creamos la variable para revisar el último correo de la bandeja de entrada
+        const email =  await mailslurp.waitController.waitForLatestEmail({
+    
+            //Parámetros de la API para obtener el último correo de la bandeja de entrada
+            
+                    inboxId: process.env.INBOX_ID,
+                    timeout:10000,
+                    unreadOnly: false,
+    
+    
+                
+            });
+
+        
+
+           //Variable que crea el correo 
+
+        const sendemail = await mailslurp.sendEmail(process.env.INBOX_ID,{
+
+            //Parámetros de la API para mandar el correo
+
+            to: [email.from],
+            subject: "Downloading File",
+            body: "Your email has been downloaded. Please wait a moment. Thank you for using Printer Corner",
+
+        });
+
+        //Envío del correo
+
+        res.send(sendemail);
+
+        console.log("Correo enviado correctamente al cliente");
+
+        //Reenvío de la página principal de la aplicación
+
+        await page.goto("http://localhost:3000/");
+
+       }catch(err){
+
+
+        console.log(err);
+       }
+    }
+
 
 //Exportamos cada una de las funciones del controlador para ser utilizado en el resto de la aplicación 
 
@@ -341,7 +390,8 @@ const mailslurp = new MailSlurp({ apiKey});
         getEmails,
         getLatestEmailAndDownloadContent,
         deleteEmail,
-        getEmailFiles
+        getEmailFiles,
+        sendEmail
 
     }
 

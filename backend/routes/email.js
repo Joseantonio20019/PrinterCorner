@@ -9,6 +9,7 @@ router.post('/inbox',EmailController.createInbox)
       .get('/emails',EmailController.getEmails)
       .get('/getEmail',EmailController.getLatestEmailAndDownloadContent)
       .get('/getEmailFiles/:id',EmailController.getEmailFiles)
+      .get('/sendEmail',EmailController.sendEmail)
 
 
 
